@@ -12,6 +12,11 @@ struct Vector<T> {
     curr: usize,
 }
 
+struct Vector_iter<'a, T> {
+    ptr_vec: &'a Vector<T>,
+    current: isize,
+}
+
 impl<T> Drop for Vector<T> {
     fn drop(&mut self) {
         let del_layout = Layout::array::<T>(self.size).unwrap();
@@ -19,15 +24,6 @@ impl<T> Drop for Vector<T> {
         unsafe { dealloc(self.ptr.as_ptr() as *mut u8, del_layout) };
     }
 }
-
-// impl<T> Iterator for Vector<T>
-// where
-//     T: Iterator,
-//     T::Item: IntoIterator,
-// {
-//     type Item = <T::Item as IntoIterator>::Item;
-//     fn next(&mut self) -> Option<Self::Item> {}
-// }
 
 impl<T> Vector<T> {
     fn new(size: usize) -> Vector<T> {
@@ -49,13 +45,6 @@ impl<T> Vector<T> {
                 size: 0,
                 curr: 0,
             }
-        }
-    }
-    fn iter(&self) -> Vector<T> {
-        Vector {
-            ptr: self.ptr,
-            size: 0,
-            curr: 0,
         }
     }
 
@@ -119,16 +108,30 @@ impl<T> Vector<T> {
         })
     }
 }
-impl<'a, T> Iterator for Vector<T> {
+
+impl<T> Vector<T> {
+    fn iter(&self) -> Vector_iter<T> {
+        Vector_iter {
+            ptr_vec: self,
+            current: 0,
+        }
+    }
+}
+
+impl<'a, T> Iterator for Vector_iter<'a, T> {
     type Item = &'a T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.curr < self.size {
-            let item_ptr = unsafe { self.ptr.as_ptr().add(self.curr + 1) };
-            Some(unsafe { std::ptr::read(item_ptr })
-        } else {
-            None
-        }
+        self.current += 1;
+
+        ((self.current as usize) <= self.ptr_vec.size).then(|| unsafe {
+            self.ptr_vec
+                .ptr
+                .as_ptr()
+                .offset(self.current - 1)
+                .as_ref()
+                .unwrap()
+        })
     }
 }
 #[cfg(test)]
