@@ -12,13 +12,32 @@ struct Vector<T> {
     curr: usize,
 }
 
-struct Vector_iter<'a, T> {
+struct VectorIter<'a, T> {
     ptr_vec: &'a Vector<T>,
     current: isize,
 }
-struct Vector_mut_iter<'a, T> {
+struct VectorMutIter<'a, T> {
     ptr_vec: &'a mut Vector<T>,
     current: isize,
+}
+
+struct VecIntoIter<T> {
+    vec: Vector<T>,
+}
+
+impl<T> Iterator for VecIntoIter<T> {
+    type Item = T;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.vec.pop()
+    }
+}
+
+impl<T> IntoIterator for Vector<T> {
+    type Item = T;
+    type IntoIter = VecIntoIter<T>;
+    fn into_iter(self) -> Self::IntoIter {
+        VecIntoIter { vec: self }
+    }
 }
 
 impl<T> Drop for Vector<T> {
@@ -86,20 +105,11 @@ impl<T> Vector<T> {
                 .as_ptr()
                 .offset(self.curr.try_into().unwrap())
                 .write(value);
-            // println!(
-            //     "{}",
-            //     &self
-            //         .ptr
-            //         .as_ptr()
-            //         .offset(self.curr.try_into().unwrap())
-            //         .as_ref()
-            //         .unwrap()
-            // );
         }
         self.curr += 1;
     }
 
-    fn pop(&mut self) -> Option<T> {
+    pub fn pop(&mut self) -> Option<T> {
         if self.is_empty() {
             return None;
         }
@@ -114,15 +124,22 @@ impl<T> Vector<T> {
 }
 
 impl<T> Vector<T> {
-    fn iter(&self) -> Vector_iter<T> {
-        Vector_iter {
+    fn iter(&self) -> VectorIter<T> {
+        VectorIter {
+            ptr_vec: self,
+            current: 0,
+        }
+    }
+
+    fn iter_mut(&mut self) -> VectorMutIter<T> {
+        VectorMutIter {
             ptr_vec: self,
             current: 0,
         }
     }
 }
 
-impl<'a, T> Iterator for Vector_iter<'a, T> {
+impl<'a, T> Iterator for VectorIter<'a, T> {
     type Item = &'a T;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -139,7 +156,7 @@ impl<'a, T> Iterator for Vector_iter<'a, T> {
     }
 }
 
-impl<'a, T> Iterator for Vector_mut_iter<'a, T> {
+impl<'a, T> Iterator for VectorMutIter<'a, T> {
     type Item = &'a mut T;
 
     fn next(&mut self) -> Option<Self::Item> {
