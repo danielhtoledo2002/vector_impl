@@ -86,7 +86,7 @@ impl<T> Vector<T> {
         self.size += 1;
     }
     fn is_empty(&mut self) -> bool {
-        self.curr == 0
+        self.size == 0
     }
 
     fn is_full(&mut self) -> bool {
@@ -113,11 +113,11 @@ impl<T> Vector<T> {
         if self.is_empty() {
             return None;
         }
-        self.curr -= 1;
+        self.size -= 1;
         Some(unsafe {
             self.ptr
                 .as_ptr()
-                .offset(self.curr.try_into().unwrap())
+                .offset(self.size.try_into().unwrap())
                 .read()
         })
     }
@@ -192,6 +192,7 @@ fn main() {
     x.push(String::from("adjhdasj"));
     x.push(String::from("adjhdasj"));
     x.push(String::from("ajkfhdskjha"));
+    x.pop();
     // println!("{}", x.size);
     for item in x.iter() {
         println!("{}", item);
