@@ -16,6 +16,10 @@ struct Vector_iter<'a, T> {
     ptr_vec: &'a Vector<T>,
     current: isize,
 }
+struct Vector_mut_iter<'a, T> {
+    ptr_vec: &'a mut Vector<T>,
+    current: isize,
+}
 
 impl<T> Drop for Vector<T> {
     fn drop(&mut self) {
@@ -134,6 +138,24 @@ impl<'a, T> Iterator for Vector_iter<'a, T> {
         })
     }
 }
+
+impl<'a, T> Iterator for Vector_mut_iter<'a, T> {
+    type Item = &'a mut T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.current += 1;
+
+        ((self.current as usize) <= self.ptr_vec.size).then(|| unsafe {
+            self.ptr_vec
+                .ptr
+                .as_ptr()
+                .offset(self.current - 1)
+                .as_mut()
+                .unwrap()
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
